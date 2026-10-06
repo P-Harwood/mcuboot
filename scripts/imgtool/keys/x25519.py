@@ -4,12 +4,11 @@ X25519 key management
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import annotations
-
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 
-from .general import DigestSigner, KeyClass, override
+from .general import KeyClass
 from .privatebytes import PrivateBytesMixin
 
 
@@ -25,7 +24,7 @@ class X25519Public(KeyClass):
         return "x25519"
 
     def _unsupported(self, name):
-        raise X25519UsageError(f"Operation {name} requires private key")
+        raise X25519UsageError("Operation {} requires private key".format(name))
 
     def _get_public(self):
         return self.key
@@ -65,7 +64,7 @@ class X25519Public(KeyClass):
         return 32
 
 
-class X25519(X25519Public, PrivateBytesMixin, DigestSigner):
+class X25519(X25519Public, PrivateBytesMixin):
     """
     Wrapper around an X25519 private key.
     """
@@ -75,7 +74,7 @@ class X25519(X25519Public, PrivateBytesMixin, DigestSigner):
         self.key = key
 
     @staticmethod
-    def generate() -> X25519:
+    def generate():
         pk = x25519.X25519PrivateKey.generate()
         return X25519(pk)
 
@@ -108,8 +107,7 @@ class X25519(X25519Public, PrivateBytesMixin, DigestSigner):
         with open(path, 'wb') as f:
             f.write(pem)
 
-    @override
-    def sign_digest(self, digest: bytes) -> bytes:
+    def sign_digest(self, digest):
         """Return the actual signature"""
         return self.key.sign(data=digest)
 

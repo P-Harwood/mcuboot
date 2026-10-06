@@ -1,5 +1,4 @@
 # Copyright 2017 Linaro Limited
-# Copyright 2024 Arm Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -21,9 +20,9 @@ Semi Semantic Versioning
 Implements a subset of semantic versioning that is supportable by the image
 header.
 """
-import re
-import sys
+
 from collections import namedtuple
+import re
 
 SemiSemVersion = namedtuple('SemiSemVersion', ['major', 'minor', 'revision',
                                                'build'])
@@ -50,7 +49,7 @@ def decode_version(text):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        print(decode_version(sys.argv[1]))
-    else:
-        print("Requires an argument, e.g. '1.0.0'")
+    print(decode_version("1.2"))
+    print(decode_version("1.0"))
+    print(decode_version("0.0.2+75"))
+    print(decode_version("0.0.0+00"))

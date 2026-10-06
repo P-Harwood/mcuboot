@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2024, Arm Limited.
+# Copyright (c) 2019-2021, Arm Limited.
 # Copyright (c) 2020, Linaro Limited
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -22,7 +22,6 @@ try:
 except ImportError:
     from cbor import dumps
 
-
 class SwComponent(int, Enum):
     """
     Software component property IDs specified by
@@ -37,17 +36,17 @@ class SwComponent(int, Enum):
 
 def create_sw_component_data(sw_type, sw_version, sw_measurement_description,
                              sw_measurement_value, sw_signer_id):
+
     # List of software component properties (Key ID + value)
-    properties = {SwComponent.TYPE: sw_type,
-                  SwComponent.VERSION: sw_version,
-                  SwComponent.SIGNER_ID: sw_signer_id,
-                  SwComponent.MEASUREMENT_DESCRIPTION: sw_measurement_description,
-                  SwComponent.MEASUREMENT_VALUE: sw_measurement_value,
-                  }
+    properties = {
+        SwComponent.TYPE: sw_type,
+        SwComponent.VERSION: sw_version,
+        SwComponent.SIGNER_ID: sw_signer_id,
+        SwComponent.MEASUREMENT_DESCRIPTION: sw_measurement_description,
+    }
 
     # Note: The measurement value must be the last item of the property
     #       list because later it will be modified by the bootloader.
-    last_key = list(properties.keys())[-1]
-    assert last_key == SwComponent.MEASUREMENT_VALUE, \
-        'Measurement value is not the last item of the property list'
+    properties[SwComponent.MEASUREMENT_VALUE] = sw_measurement_value
+
     return dumps(properties)

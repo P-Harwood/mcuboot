@@ -4,12 +4,11 @@ ED25519 key management
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import annotations
-
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
-from .general import DigestSigner, KeyClass, override
+from .general import KeyClass
 
 
 class Ed25519UsageError(Exception):
@@ -24,7 +23,7 @@ class Ed25519Public(KeyClass):
         return "ed25519"
 
     def _unsupported(self, name):
-        raise Ed25519UsageError(f"Operation {name} requires private key")
+        raise Ed25519UsageError("Operation {} requires private key".format(name))
 
     def _get_public(self):
         return self.key
@@ -34,11 +33,6 @@ class Ed25519Public(KeyClass):
         return self._get_public().public_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-    def get_public_pem(self):
-        return self._get_public().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo)
 
     def get_private_bytes(self, minimal, format):
         self._unsupported('get_private_bytes')
@@ -71,7 +65,7 @@ class Ed25519Public(KeyClass):
         return k.verify(signature=signature, data=digest)
 
 
-class Ed25519(Ed25519Public, DigestSigner):
+class Ed25519(Ed25519Public):
     """
     Wrapper around an ED25519 private key.
     """
@@ -81,7 +75,7 @@ class Ed25519(Ed25519Public, DigestSigner):
         self.key = key
 
     @staticmethod
-    def generate() -> Ed25519:
+    def generate():
         pk = ed25519.Ed25519PrivateKey.generate()
         return Ed25519(pk)
 
@@ -89,7 +83,8 @@ class Ed25519(Ed25519Public, DigestSigner):
         return self.key.public_key()
 
     def get_private_bytes(self, minimal, format):
-        raise Ed25519UsageError(f"Operation not supported with {self.shortname()} keys")
+        raise Ed25519UsageError("Operation not supported with {} keys".format(
+            self.shortname()))
 
     def export_private(self, path, passwd=None):
         """
@@ -107,7 +102,6 @@ class Ed25519(Ed25519Public, DigestSigner):
         with open(path, 'wb') as f:
             f.write(pem)
 
-    @override
-    def sign_digest(self, digest: bytes) -> bytes:
+    def sign_digest(self, digest):
         """Return the actual signature"""
         return self.key.sign(data=digest)

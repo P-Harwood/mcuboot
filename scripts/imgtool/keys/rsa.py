@@ -4,16 +4,15 @@ RSA Key management
 
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import annotations
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS
+from cryptography.hazmat.primitives.asymmetric.padding import PSS, MGF1
 from cryptography.hazmat.primitives.hashes import SHA256
 
-from .general import KeyClass, PayloadSigner, override
+from .general import KeyClass
 from .privatebytes import PrivateBytesMixin
+
 
 # Sizes that bootutil will recognize
 RSA_KEY_SIZES = [2048, 3072]
@@ -35,7 +34,7 @@ class RSAPublic(KeyClass):
         return "rsa"
 
     def _unsupported(self, name):
-        raise RSAUsageError(f"Operation {name} requires private key")
+        raise RSAUsageError("Operation {} requires private key".format(name))
 
     def _get_public(self):
         return self.key
@@ -66,10 +65,10 @@ class RSAPublic(KeyClass):
             f.write(pem)
 
     def sig_type(self):
-        return f"PKCS1_PSS_RSA{self.key_size()}_SHA256"
+        return "PKCS1_PSS_RSA{}_SHA256".format(self.key_size())
 
     def sig_tlv(self):
-        return f"RSA{self.key_size()}"
+        return"RSA{}".format(self.key_size())
 
     def sig_len(self):
         return self.key_size() / 8
@@ -83,7 +82,7 @@ class RSAPublic(KeyClass):
                         algorithm=SHA256())
 
 
-class RSA(RSAPublic, PrivateBytesMixin, PayloadSigner):
+class RSA(RSAPublic, PrivateBytesMixin):
     """
     Wrapper around an RSA key, with imgtool support.
     """
@@ -93,10 +92,10 @@ class RSA(RSAPublic, PrivateBytesMixin, PayloadSigner):
         self.key = key
 
     @staticmethod
-    def generate(key_size: int = 2048) -> RSA:
+    def generate(key_size=2048):
         if key_size not in RSA_KEY_SIZES:
-            raise RSAUsageError(f"Key size {key_size} is not supported by MCUboot"
-                                )
+            raise RSAUsageError("Key size {} is not supported by MCUboot"
+                                .format(key_size))
         pk = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=key_size,
@@ -165,8 +164,7 @@ class RSA(RSAPublic, PrivateBytesMixin, PayloadSigner):
         with open(path, 'wb') as f:
             f.write(pem)
 
-    @override
-    def sign(self, payload: bytes) -> bytes:
+    def sign(self, payload):
         # The verification code only allows the salt length to be the
         # same as the hash length, 32.
         return self.key.sign(
